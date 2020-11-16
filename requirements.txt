@@ -1,0 +1,7 @@
+numpy
+matplotlib
+astropy
+torch==1.7.0
+torchdiffeq
+scikit-learn
+jupyter
