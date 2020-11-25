@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+from astropy.io import fits
+from lenstools import ConvergenceMap
+import os, glob
+
+"""
+    Takes a dataset of convergence maps organized as follows:
+        -convergence_maps1/...
+        -convergence_maps2/...
+        -convergence_maps3/...
+    And create a dataset of power spectra
+"""
+cosmology = ["H", "OMEGA_M", "OMEGA_L", "W0", "WA", "Z", "ANGLE"]
+ell_bins = [f"ell{i}" for i in range(38 - 1 )]
+
+def main(datapath, output_file):
+    ell = np.logspace(2, np.log10(5000), 38)  # multipole bin edges
+    data = pd.DataFrame(columns=cosmology+ell_bins)
+    data.to_csv(output_file) # save columns to file
+    # make a single row to receive data
+    data = data.append(pd.DataFrame(
+        np.zeros(len(cosmology) + len(ell_bins)).reshape(1, -1),
+        columns=cosmology+ell_bins))
+    for _, dirs, _ in os.walk(datapath):
+        for d in dirs:
+            for root, _, files in os.walk(os.path.join(datapath, d)):  
+                for conv_map_fit in files:
+                    conv_map = ConvergenceMap.load(conv_map_fit)
+                    hdul = fits.open(conv_map_fit)[0].header
+                    for c_param in cosmology:
+                        data[c_param] = hdul[c_param]
+                    l, power_spectrum = conv_map.powerSpectrum(ell)
+                    data[ell_bins] = power_spectrum
+                    data.to_csv(output_file, mode="a", header=False)
+
+if __name__ == "__main__":
+    from parser import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("-d", "--datapath", type=str, required=True, help="Path to the root folder of convergence map")
+    parser.add_argument("-o", "--output_file", type=str, required=True, help="Path to the output file (csv)")
+    args = parser.parse_args()
+    main(datapath=args.datapath, output_file=args.output_file)
+
+
