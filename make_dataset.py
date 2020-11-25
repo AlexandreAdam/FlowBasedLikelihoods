@@ -26,8 +26,8 @@ def main(datapath, output_file):
         for d in dirs:
             for root, _, files in os.walk(os.path.join(datapath, d)):  
                 for conv_map_fit in files:
-                    conv_map = ConvergenceMap.load(conv_map_fit)
-                    hdul = fits.open(conv_map_fit)[0].header
+                    conv_map = ConvergenceMap.load(os.path.join(root,conv_map_fit))
+                    hdul = fits.open(os.path.join(root, conv_map_fit))[0].header
                     for c_param in cosmology:
                         data[c_param] = hdul[c_param]
                     l, power_spectrum = conv_map.powerSpectrum(ell)
@@ -35,7 +35,7 @@ def main(datapath, output_file):
                     data.to_csv(output_file, mode="a", header=False)
 
 if __name__ == "__main__":
-    from parser import ArgumentParser
+    from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-d", "--datapath", type=str, required=True, help="Path to the root folder of convergence map")
     parser.add_argument("-o", "--output_file", type=str, required=True, help="Path to the output file (csv)")
