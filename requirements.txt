@@ -1,4 +1,7 @@
 numpy
+matplotlib
+seaborn
+scipy
 emcee==2.2.0
 matplotlib
 astropy
@@ -8,5 +11,8 @@ scikit-learn
 jupyter
 pandas
 mpipool
+tensorflow>=2.3
+tensorflow_probability
+dm-sonnet
 # The following is needed for running simulations themselves
 # camb
