@@ -24,6 +24,7 @@ import seaborn as sns
 import tqdm
 from scipy.stats import kde
 import os
+from ffjord import FFJORD
 
 
 tfb = tfp.bijectors
@@ -150,13 +151,18 @@ def main():
     # Define bijector function (here, we stack 4 FFJORD models)
     bijectors = []
     for _ in range(STACKED_FFJORDS):
-      mlp_model = MLP_ODE(NUM_HIDDEN, NUM_LAYERS, NUM_OUTPUT)
-      next_ffjord = tfb.FFJORD(
-          state_time_derivative_fn=mlp_model,
-          ode_solve_fn=ode_solve_fn,
-          trace_augmentation_fn=trace_augmentation_fn
-          )
-      bijectors.append(next_ffjord)
+        mlp_model = MLP_ODE(NUM_HIDDEN, NUM_LAYERS, NUM_OUTPUT)
+#       next_ffjord = tfb.FFJORD(
+          # state_time_derivative_fn=mlp_model,
+          # ode_solve_fn=ode_solve_fn,
+          # trace_augmentation_fn=trace_augmentation_fn
+          # )
+        next_ffjord = FFJORD(
+                state_derivative_fn=mlp_model,
+                ode_solver_fn=ode_solve_fn,
+                state_size=2
+                )
+        bijectors.append(next_ffjord)
 
     stacked_ffjord = tfb.Chain(bijectors[::-1])
 
@@ -192,6 +198,7 @@ def main():
 
     # Plotting of progress
     evaluation_samples = []
+    print("Getting samples")
     base_samples, transformed_samples = get_samples()
     transformed_grid = get_transformed_grid()
     evaluation_samples.append((base_samples, transformed_samples, transformed_grid))
@@ -204,13 +211,14 @@ def main():
     plot_panel(
         grid, panel_data[0], panel_data[2], panel_data[1], moons, axarray, False)
     plt.tight_layout()
-    plt.savefig(f"../results/moon_ffjord_example/panel_{panel_id:02d}.png")
+    plt.savefig(f"../results/moon_ffjord_example/panel_myffjord_{panel_id:02d}.png")
 
     # Training
     learning_rate = tf.Variable(LR, trainable=False)
     optimizer = snt.optimizers.Adam(learning_rate)
 
     losses = []
+    print("started training")
     for epoch in tqdm.trange(NUM_EPOCHS // 2):
         base_samples, transformed_samples = get_samples()
         transformed_grid = get_transformed_grid()
@@ -225,15 +233,16 @@ def main():
           1, 4, figsize=(16, 6))
         plot_panel(grid, panel_data[0], panel_data[2], panel_data[1], moons, axarray)
         plt.tight_layout()
-        plt.savefig(f"../results/moon_ffjord_example/panel_{panel_id:02d}.png")
+        plt.savefig(f"../results/moon_ffjord_example/panel_myffjord_{panel_id:02d}.png")
+        plt.close("all")
 
     # learning curve
     plt.figure()
-    plt.plot(plt.arange(NUM_EPOCHS//2), losses, "k-")
+    plt.plot(np.arange(NUM_EPOCHS//2), losses, "k-")
     plt.xlabel("epochs")
     plt.ylabel(r"-\mathbb{E}_{p(\mathbf{x})} \log q_\theta (\mathbf{x})")
     plt.title("Learning curve")
-    plt.savefig("../results.moon_ffjord_example/lr_curve.png")
+    plt.savefig("../results.moon_ffjord_example/lr_curve_myffjord.png")
 
 
 if __name__ == "__main__":
