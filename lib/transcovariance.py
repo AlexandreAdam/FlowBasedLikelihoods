@@ -27,7 +27,7 @@ def zca_whiten(X):
     D = np.diag(np.sqrt(1/Sigma)) # square root inverse of singular value matrix
     W = U @ D @ V # rotation matrix
     centered = X - X.mean(axis=0)
-    X_white = np.einsum("ij, ...j -> ...i" W, centered)
+    X_white = np.einsum("ij, ...j -> ...i", W, centered)
     return X_white
 
 def pca_whiten(X):
@@ -41,7 +41,7 @@ def pca_whiten(X):
     D = np.diag(np.sqrt(1/Sigma)) # square root inverse of singular value matrix
     W = D @ U.T # rotation matrix
     centered = X - X.mean(axis=0)
-    X_white = np.einsum("ij, ...j -> ...i" W, centered)
+    X_white = np.einsum("ij, ...j -> ...i", W, centered)
     return X_white
 
 def gaussian_pdf(x, mean, var):
