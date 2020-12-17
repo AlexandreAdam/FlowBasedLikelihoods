@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import gaussian_kde, norm
 from scipy.special import binom
 
-ell = np.logspace(np.log10(500), np.log10(5000), 36) 
+ell = np.logspace(np.log10(500), np.log10(5000), 37) 
 
 def zca_whiten(X):
     """
@@ -124,16 +124,16 @@ def transcovariance_plot(X, bins=10, ax=None, **kwargs):
         f, ax = plt.subplots(figsize=figsize)
     color = kwargs.pop("color", "b")
     ax.plot(ell, eps_plus, ls="-", color=color, label="Data")
-    ax.plot(ell, eps_null, ls="-", color="gray", label="Gaussian")
+    #ax.plot(ell, eps_null, ls="-", color="gray", label="Gaussian")
 
     ax.fill_between(ell, eps_plus + eps_var, eps_plus - eps_var, color=color, alpha=0.5)
-    ax.fill_between(ell, eps_null + eps_var_null, eps_null - eps_var_null, color="gray", alpha=0.5)
+    #ax.fill_between(ell, eps_null + eps_var_null, eps_null - eps_var_null, color="gray", alpha=0.5)
 
 
 
 if __name__ == "__main__":
     import pandas as pd
-    data = pd.read_csv("../powerspec.csv")
+    data = pd.read_csv("../power_spectrum.csv")
     ell_bins = [f"ell{i}" for i in range(37)]
     X = data[ell_bins].to_numpy()
     transcovariance_matrix(X[:100])
