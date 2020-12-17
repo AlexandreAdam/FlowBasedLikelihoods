@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import gaussian_kde, norm
 from scipy.special import binom
 
-ell = np.logspace(np.log10(500), np.log10(5000), 37) 
+ell = np.logspace(np.log10(500), np.log10(5000), 36) 
 
 def zca_whiten(X):
     """
@@ -70,7 +70,7 @@ def pairwise_bins(X, bins=10):
             K = gaussian_kde(pairs[:, 0] + pairs[:, 1])
             H_b.append(K.pdf(x))
 
-            print(f"\r transcovariance pair done: {l}/{total_pairs-1:d}, end="", flush=True")
+            print(f"\r transcovariance pair done: {l}/{total_pairs-1:d}", end="", flush=True)
             l += 1
     H_b = np.array(H_b).T
     return H_b, x
@@ -79,7 +79,7 @@ def integrated_square_error(X, bins=10):
     d = X.shape[1]
     H_b, x = pairwise_bins(X, bins=bins)
 
-    support = np.tile(x, (d, 1)).T
+    support = np.tile(x, (H_b.shape[1], 1)).T
 
     # mean integrated square error
     mise = ((H_b - gaussian_pdf(support, mean=0, var=2))**2).mean(axis=0)
@@ -90,6 +90,7 @@ def integrated_square_error(X, bins=10):
     return mise, stdise
 
 def transcovariance_matrix(X, bins=10):
+    d = X.shape[1]
     mise, stdise = integrated_square_error(X, bins=bins)
 
     # fill upper and lower triangle of the power spectrum bin matrix
@@ -97,9 +98,10 @@ def transcovariance_matrix(X, bins=10):
     upper_tri_indices = np.triu_indices(d, k=1) # k=1: ommit diagonal
 
     _transcovariance_matrix[upper_tri_indices] = mise # upper triangle
+
     _transcovariance_matrix.T[upper_tri_indices] = mise # lower triangle
 
-    espilon_plus = _transcovariance_matrix.sum(axis=1)
+    epsilon_plus = _transcovariance_matrix.sum(axis=1)
 
     _transcovariance_error = np.zeros((d, d))
     _transcovariance_error[upper_tri_indices] = stdise
@@ -128,5 +130,12 @@ def transcovariance_plot(X, bins=10, ax=None, **kwargs):
     ax.fill_between(ell, eps_null + eps_var_null, eps_null - eps_var_null, color="gray", alpha=0.5)
 
 
+
+if __name__ == "__main__":
+    import pandas as pd
+    data = pd.read_csv("../powerspec.csv")
+    ell_bins = [f"ell{i}" for i in range(37)]
+    X = data[ell_bins].to_numpy()
+    transcovariance_matrix(X[:100])
 
 
