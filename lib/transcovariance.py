@@ -23,7 +23,7 @@ def zca_whiten(X):
     of the covariance matrix
     """
     cov = np.cov(X.T)
-    U, Sigma, V = np.linalv.svd(cov)
+    U, Sigma, V = np.linalg.svd(cov)
     D = np.diag(np.sqrt(1/Sigma)) # square root inverse of singular value matrix
     W = U @ D @ V # rotation matrix
     centered = X - X.mean(axis=0)
@@ -67,7 +67,7 @@ def pairwise_bins(X, bins=10):
             pairs = zca_whiten(X[:, (i, j)])
 
             # fit kde on the sum
-            K = gaussian_kde(pairs[:, 0], + pairs[:, 1])
+            K = gaussian_kde(pairs[:, 0] + pairs[:, 1])
             H_b.append(K.pdf(x))
 
             print(f"\r transcovariance pair done: {l}/{total_pairs-1:d}, end="", flush=True")
