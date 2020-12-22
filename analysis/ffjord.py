@@ -71,28 +71,22 @@ class FFJORD(tfp.bijectors.Bijector):
 
         def augmented_dynamics_fn(time, augmented_x):
             state, _ = augmented_x
-            random_samples = self._sample_dist(tf.concat([[1], state.shape], axis=0),
-                    dtype=self._dtype)
+            random_samples = self._sample_dist(shape=[self.num_samples, *self.state_size])
+
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as tape:
                 tape.watch(state)
                 # state_time_derivative is f(z, t; theta) in Gratwohl et al.
                 state_time_derivative = state_derivative_fn(time, state)
 
-            # Compute Jacobian Vector product to save memory and computation cost
-            def estimate_trace(random_sample):
-                # Needed otherwise gradient get confused
-                jvp = tape.gradient(
-                        target=state_time_derivative, 
-                        sources=state,
-                        output_gradients=random_sample
-                        )
+            def trace(random_sample):
+                # Compute vector-Jacobian product
+                vjp = tape.gradient(state_time_derivative, state, random_sample)
+                return vjp
 
-                return random_sample * jvp
-
-            results = tf.map_fn(estimate_trace, random_samples)
+            results = tf.map_fn(trace, random_samples)
             trace_estimate = tf.reduce_mean(results, axis=0)
 
-            return state_time_derivative, trace_estimate
+            return state_time_derivative, -trace_estimate
 
         return augmented_dynamics_fn
 
@@ -143,11 +137,4 @@ class FFJORD(tfp.bijectors.Bijector):
     def _inverse_log_det_jacobian(self, y):
         _, inverse_log_det_jac = self.augmented_inverse(y)
         return inverse_log_det_jac
-
-
-
-
-
-
-
 

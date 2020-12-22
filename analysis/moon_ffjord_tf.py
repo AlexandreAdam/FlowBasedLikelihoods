@@ -69,7 +69,7 @@ def make_grid(xmin, xmax, ymin, ymax, gridlines, pts):
       ygrid = np.linspace(ymin, ymax, gridlines)
       xlines = np.stack([a.ravel() for a in np.meshgrid(xpts, ygrid)])
       ylines = np.stack([a.ravel() for a in np.meshgrid(xgrid, ypts)])
-      return np.concatenate([xlines, ylines], 1).T
+      return np.concatenate([xlines.astype(np.float32), ylines.astype(np.float32)], 1).T
 
 def plot_density(data, axis):
     x, y = np.squeeze(np.split(data, 2, axis=1))
